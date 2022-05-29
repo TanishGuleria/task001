@@ -12,5 +12,5 @@ APPLICATION IS RUUNING ON http://ec2-54-235-22-98.compute-1.amazonaws.com:3000/
 
 #Run playbook  
 
- nsible-playbook dockerdeploy.yaml --extra-vars "nodes=webserver"
+ ansible-playbook dockerdeploy.yaml --extra-vars "nodes=webserver"
 
