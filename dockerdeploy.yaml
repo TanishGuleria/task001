@@ -1,7 +1,5 @@
 - hosts: {{ nodes }}
   become: yes
-  vars:
-  - docker_http_port: "8080"
   tasks:
 
 #pre config
