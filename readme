@@ -1,0 +1,16 @@
+
+APPLICATION IS RUUNING ON http://ec2-54-235-22-98.compute-1.amazonaws.com:3000/
+
+
+
+#make sure the host file past is set in local ansible host to ./
+
+#update the ssh key and remote host ip where you want to deploy the to-application
+
+ #for changing the port of container  update PORT varible in .env file -> /app folder 
+ 
+
+#Run playbook  
+
+ ansible-playbook dockerdeploy.yaml --extra-vars "nodes=webserver"
+

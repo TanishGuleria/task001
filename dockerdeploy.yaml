@@ -1,0 +1,81 @@
+- hosts: {{ nodes }}
+  become: yes
+  vars:
+  - docker_http_port: "8080"
+  tasks:
+
+#pre config
+    - name: Check for Python
+      raw: test -e /usr/bin/python
+      changed_when: false
+      failed_when: false
+      register: check_python
+
+    - name: Install Python
+      raw: yum -y install python
+      when: check_python.rc != 0
+
+    - name: Upgrade all packages
+      yum: name=* state=latest
+
+    - name: Check if Docker is installed
+      command: systemctl status docker
+      register: docker_check
+      ignore_errors: yes
+
+    - name: Download the Docker installer
+      get_url:
+        url: https://get.docker.com/
+        dest: /root/install_docker.sh
+        mode: 0700
+      when: docker_check.stderr.find('service could not be found') != -1
+
+    - name: Install Docker
+      shell: /root/install_docker.sh
+      when: docker_check.stderr.find('service could not be found') != -1
+
+    - name: Remove the Docker installer file.
+      file:
+        state: absent
+        path: /root/install_docker.sh
+
+    - name: Enable the Docker daemon in systemd
+      systemd:
+        name: docker
+        enabled: yes
+        masked: no
+
+    - name: Start the Docker daemon
+      systemd:
+        name: docker
+        state: started
+        masked: no
+
+    - name: Check if Docker Compose is installed
+      command: docker-compose --version
+      register: docker_compose_check
+      ignore_errors: yes
+
+    - name: Download and install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.21.2/docker-compose-Linux-x86_64
+        dest: /usr/bin/docker-compose
+        mode: 0755
+      when:
+        - docker_compose_check.msg is defined
+        - docker_compose_check.msg.find('No such file or directory') != -1
+
+# copying app from local host to remote host 
+    - synchronize:
+        src:  /app
+        dest: /home/ec2-user/myapp
+
+# check for copy files 
+    - name: Go to the folder and execute command
+      command: chdir=/home/ec2-user/myapp/app ls
+#running docker-compose up command 
+    - name: Run container
+      become: True
+      shell:
+        cmd: "docker-compose -f docker-compose.yaml up -d"
+        chdir: /home/ec2-user/myapp/app
